@@ -1,0 +1,95 @@
+.form-signinup{
+    display: none;
+    flex-direction: column; /* Align children vertically */
+    position: fixed;
+    z-index: 2000;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    /* box-shadow: 0px 4px 60px 0px #AAAAAA; */
+    align-items: center;
+}
+.content-signinup{
+    width: 340px;
+    margin-top: 80px; 
+    border-radius: 6px;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure content within respects border-radius */
+    display: flex; /* Use flexbox for vertical alignment */
+    flex-direction: column; /* Align children vertically */
+}
+.content-signinup-top{
+    height: 10px;
+    width: 100%;
+    /* background: linear-gradient(270deg, #337788 0%, #66AABB 100%); */
+    background-color:burlywood;
+}
+.content-signinup-main{
+    position: relative;
+    padding: 15px;
+    /* background-color: #FFFFFF; */
+    background-color: #FFFEFA;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.close-signinup {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    right: 15px;
+    top: 15px;
+    cursor: pointer;
+}
+.signinup-title{
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: #666666;
+}
+.redirect-signinup{
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    color: #666666;
+    cursor: pointer;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+/* button[type="submit"]  */
+.submit_signinup{
+    width: 100%;
+    height: 47px;
+    border-radius: 5px;
+    padding: 10px;
+    /* background-color: #448899; */
+    background-color:burlywood;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+/* input[type="text"], input[type="email"], input[type="password"]  */
+.signinup_name, .signinup_email, .signinup_password{
+    width: 100%;
+    height: 47px;
+    border-radius: 5px;
+    padding: 15px;
+    background-color: #FFFFFF;
+    border: 1px solid #CCCCCC;
+    font-size: 16px;
+    font-weight: 500;
+    color: #757575;
+    box-sizing: border-box;
+}
+/* input[type="text"] */
+.signinup_name{
+    display: none
+}
+.signinup-message{
+    text-align: center;
+    gap: 0;
+}
