@@ -59,7 +59,7 @@
             </div>
             <div class="request-frame">
                 <img src="/static/img/picture.png" class="request-pic">
-                <img src="/static/img/voice.png" class="request-pic">
+                <img src="/static/img/voice.png" class="request-voice" onclick="recording();">
                 <div class="request-form">
                     <input type="text" id="request" name="request" placeholder="傳訊息給 MultiAI" required>
                     <button type="submit" id="request-submit">傳送</button>
@@ -68,6 +68,7 @@
         </div>
     </div>
     <script src="/static/js/user.js"></script>
+    <script src="/static/js/recording.js"></script>
     <script src="/static/js/fetch_multi.js"></script>
 </body>
 </html>

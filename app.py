@@ -4,8 +4,9 @@
 # pip install genai
 # pip install anthropic
 # pip install python-dotenv
+# pip install google-cloud-speech
 from fastapi import *
-from fastapi import FastAPI, Request, Response, HTTPException, Depends
+from fastapi import FastAPI, Request, Response, HTTPException, Depends, File, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 # from fastapi.templating import Jinja2Templates
@@ -33,6 +34,8 @@ import jwt
 from fastapi.security import OAuth2PasswordBearer
 import datetime
 # import markdown
+
+
 
 app=FastAPI()
 
@@ -486,3 +489,59 @@ async def fetchclaude(response: Response, input: Request, current_user: dict = D
             cursor.close()
         if con is not None:
             con.close()
+
+
+###################### speech to text
+# from google.cloud import speech_v1
+# from google.cloud import speech_v1p1beta1 as speech
+from google.api_core.exceptions import GoogleAPIError
+import logging
+from google.cloud import speech
+# from google.oauth2 import service_account
+
+# Load credentials using the service account key file
+# credentials = service_account.Credentials.from_service_account_file('focal-welder-433114-g7-350fbad7bbd9.json')
+
+# Initialize Google Cloud Speech client with credentials
+# client = speech.SpeechClient(credentials=credentials)
+
+# 初始化 Google Cloud Speech 客戶端
+client_record = speech.SpeechClient(
+    client_options={
+        'api_key': os.environ.get('SPEECH_TO_TEXT_KEY')
+    }
+)
+
+# response沒有results解法：不要設定encoding，讓它自己去判斷
+# https://cloud.google.com/speech-to-text/docs/release-notes?hl=zh-cn#v1beta1
+@app.post("/api/recording")
+async def convert_audio(file: UploadFile = File(...)):
+    try:
+        # Read the uploaded audio file
+        audio_bytes = await file.read()
+        
+        # Set up Google Speech-to-Text API configuration
+        audio = speech.RecognitionAudio(content=audio_bytes)
+        config = speech.RecognitionConfig(
+            sample_rate_hertz=48000,  # Adjust if necessary, or use 44100 if recording with that sample rate
+            language_code='zh-TW',
+        )
+
+        # Call Google Speech-to-Text API
+        response = client_record.recognize(config=config, audio=audio)
+        # print(response)
+
+        # Extract transcription text
+        transcription = ""
+        for result in response.results:
+            transcription += result.alternatives[0].transcript
+        # print(transcription)
+
+        return {"transcription": transcription}
+
+    except GoogleAPIError as e:
+        logging.error(f"Google API Error: {e}")
+        return {"error": "An error occurred while processing the audio."}
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return {"error": "An unexpected error occurred."}
