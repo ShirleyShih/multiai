@@ -6,7 +6,7 @@
 # pip install python-dotenv
 # pip install google-cloud-speech
 from fastapi import *
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, File, UploadFile
+from fastapi import FastAPI, Request, Response, Depends, File, UploadFile, Form
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 # from fastapi.templating import Jinja2Templates
@@ -33,9 +33,14 @@ from typing import Optional
 import jwt
 from fastapi.security import OAuth2PasswordBearer
 import datetime
-# import markdown
+import boto3
+import uuid
 
-
+import imghdr
+from PIL import Image
+import io
+import base64
+import httpx
 
 app=FastAPI()
 
@@ -172,12 +177,34 @@ def current_memberid(current_user):
         memberid=current_user["id"]
     return memberid
 
-class Request(BaseModel):
-    request_text: str
-    request_id: str
+# class Request(BaseModel):
+#     request_text: str
+#     request_id: str
+#     image: Optional[UploadFile] = None
+
+# class Request(BaseModel):
+#     request_text: str = Form(...)
+#     request_id: str = Form(...)
+#     image: Optional[UploadFile] = None
+
+# Initialize S3 client
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.environ.get('AWS_REGION')
+)
+
+# Define S3 bucket
+S3_BUCKET = os.environ.get('AWS_BUCKET_NAME')
 
 @app.post("/api/conversation/{conversation_id}")
-async def create_conversation(response: Response, input: Request, conversation_id: str, current_user: dict = Depends(get_current_user)):
+async def create_conversation(response: Response,
+                              conversation_id: str,
+                              request_text: str = Form(...),
+                              request_id: str = Form(...),
+                              image: Optional[UploadFile] = File(None),
+                              current_user: dict = Depends(get_current_user)):
     try:
         # print(current_user)
         memberid=current_memberid(current_user)
@@ -206,14 +233,43 @@ async def create_conversation(response: Response, input: Request, conversation_i
             # conversation_id = cursor.lastrowid
         # print(title)
 
+        # insert new request
         if title:
+            # upload selected image to s3
+            file_url = None
+            if image:
+                file_content = await image.read()
+
+                # Determine the image type (e.g., 'jpeg', 'png')
+                image_type = imghdr.what(None, h=file_content)
+
+                # Map the image type to file extension and ContentType
+                extension_map = {
+                    'jpeg': 'jpg',
+                    'png': 'png'
+                }
+                if image_type in extension_map:
+                    file_extension = extension_map[image_type]
+                    imageno = f"{str(uuid.uuid4())}.{file_extension}"
+                    s3.put_object(
+                        Body=file_content,
+                        Bucket=S3_BUCKET,
+                        Key=imageno,
+                        ContentType=f"image/{image_type}"
+                    )
+                    # print("File uploaded to S3 successfully")
+
+                    file_url = f"https://d3cutng1gh49pz.cloudfront.net/{imageno}"
+                    # print(f"File URL: {file_url}")
+
             # print(conversation_id)
-            cursor.execute("""insert into request(conversation_id,request_id,request_text,date,time) 
-                values(%s,%s,%s,%s,%s)""",
-                (conversation_id,input.request_id,input.request_text,current_date,current_time)) #(user.name,user.email,user.password)
+            cursor.execute("""insert into request(conversation_id,request_id,request_text,date,time,imageurl) 
+                values(%s,%s,%s,%s,%s,%s)""",
+                (conversation_id,request_id,request_text,current_date,current_time,file_url)) #(user.name,user.email,user.password)
             con.commit()
 
-            return {"ok": True, "message": "成功新增對話"}
+            return {"ok": True, "imageurl": file_url, "message": "成功新增對話"}
+            # return {"ok": True, "message": "成功新增對話"}
 
     except mysql.connector.Error as e:
         response.status_code = 500
@@ -262,7 +318,7 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
 
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
-        cursor.execute("""select a.request_text, b.response_text 
+        cursor.execute("""select a.request_text, b.response_text, a.imageurl
                        from request a
                        inner join response_openai b
                        on a.request_id=b.request_id and a.conversation_id=%s
@@ -280,17 +336,27 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
     
     except Error as e:
         return {"error": True, "message": str(e)}
-    
+
+# https://www.ithome.com.tw/news/155929
+# https://www.youtube.com/watch?v=_1ujhANv6a4
 @app.post("/api/openai")
-# async def signup(response: Response, user: User):
-async def fetchopenai(response: Response, input: Request, current_user: dict = Depends(get_current_user)):
+async def fetchopenai(response: Response, 
+                      request_text: str = Form(...),
+                      request_id: str = Form(...),
+                      imageurl: Optional[str] = Form(None),
+                      current_user: dict = Depends(get_current_user)):
     cursor = None
     con = None
     try:
         memberid=1
+        input_content = [{"type":"text","text":request_text}]
+        
+        if imageurl:
+            input_content.append({"type":"image_url","image_url":{"url":imageurl,},})
+        
         res = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # Update the model name as needed
-            messages=[{"role": "user", "content": input.request_text}],
+            model="gpt-4o",  # gpt-3.5-turbo
+            messages=[{"role": "user", "content": input_content}],
             max_tokens=1000
         )
         # print(res)
@@ -305,7 +371,7 @@ async def fetchopenai(response: Response, input: Request, current_user: dict = D
         if res_text:
             cursor.execute("""insert into response_openai(request_id,response_text) 
                            values(%s,%s)""",
-                           (input.request_id,res_text))
+                           (request_id,res_text))
             con.commit()
             response.status_code=200
             return {"ok": True, "message": "成功取得openai response"}
@@ -351,7 +417,7 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
 
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
-        cursor.execute("""select a.request_text, b.response_text 
+        cursor.execute("""select a.request_text, b.response_text, a.imageurl
                        from request a
                        inner join response_gemini b
                        on a.request_id=b.request_id and a.conversation_id=%s
@@ -370,13 +436,18 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
     except Error as e:
         return {"error": True, "message": str(e)}
 
+# https://medium.com/@m.alruqimi/image-analysis-using-gemini-pro-model-medical-images-analysis-as-a-case-study-9cda129a3176
 @app.post("/api/gemini")
-async def fetchgemini(response: Response, input: Request, current_user: dict = Depends(get_current_user)):
+async def fetchgemini(response: Response, 
+                      request_text: str = Form(...),
+                      request_id: str = Form(...),
+                      imageurl: Optional[UploadFile] = File(None),
+                      current_user: dict = Depends(get_current_user)):
     cursor = None
     con = None
     try:
         memberid = 1
-
+        
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
             generation_config=generation_config,
@@ -386,16 +457,18 @@ async def fetchgemini(response: Response, input: Request, current_user: dict = D
             }
         )
 
-        # Initialize the chat session
-        chat_session = model.start_chat(history=[])
+        if imageurl:
+            image_bytes = await imageurl.read()
+            image = Image.open(io.BytesIO(image_bytes))
+            response = model.generate_content([request_text,image])
+        else:
+            # Initialize the chat session
+            chat_session = model.start_chat(history=[])
+            response = chat_session.send_message(request_text) # stream=True 串流即時通訊
 
-        response = chat_session.send_message(input.request_text) # stream=True 串流即時通訊
         # print(response)
         res_text=response.text
         # print(res_text)
-
-        # for message in chat.history:
-        #     display(to_markdown(f'**{message.role}**: {message.parts[0].text}'))
 
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
@@ -403,7 +476,7 @@ async def fetchgemini(response: Response, input: Request, current_user: dict = D
         if res_text:
             cursor.execute("""insert into response_gemini(request_id,response_text) 
                            values(%s,%s)""",
-                           (input.request_id,res_text))
+                           (request_id,res_text))
             con.commit()
             response.status_code=200
             return {"ok": True, "message": "成功取得Gemini response"}
@@ -429,7 +502,7 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
 
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
-        cursor.execute("""select a.request_text, b.response_text 
+        cursor.execute("""select a.request_text, b.response_text, a.imageurl
                        from request a
                        inner join response_claude b
                        on a.request_id=b.request_id and a.conversation_id=%s
@@ -448,25 +521,41 @@ async def get_dialog(conversation_id: str, response: Response, current_user: dic
     except Error as e:
         return {"error": True, "message": str(e)}
 
+# https://docs.anthropic.com/en/docs/build-with-claude/vision
 @app.post("/api/claude")
-async def fetchclaude(response: Response, input: Request, current_user: dict = Depends(get_current_user)):
+async def fetchopenai(response: Response, 
+                      request_text: str = Form(...),
+                      request_id: str = Form(...),
+                      imageurl: Optional[str] = Form(None),
+                      current_user: dict = Depends(get_current_user)):
     cursor = None
     con = None
-    try:        
+    try:
+        input_content = [{"type":"text","text":request_text}]
+        
+        if imageurl:
+            extension_map = {
+                'jpeg': 'jpg',
+                'png': 'png'
+            }
+            image_type=imageurl.split('.')[-1]
+            
+            if image_type in extension_map:
+                file_extension = extension_map[image_type]
+                image1_media_type = "image/"+file_extension
+                image1_data = base64.b64encode(httpx.get(imageurl).content).decode("utf-8")
+                source={"type":"base64","media_type": image1_media_type,"data": image1_data,}
+                input_content.append({"type":"image","source":source})
+
         message = client.messages.create(
-            model="claude-3-haiku-20240307",
+            model="claude-3-5-sonnet-20240620", #claude-3-haiku-20240307
             max_tokens=1000,
             messages=[
-                {"role": "user", "content": input.request_text}
-            ] #, stream=True
+                {"role": "user", "content": input_content}
+            ]
         )
-        # for event in stream:
-        #     print(event)
 
         res_text=message.content[0].text
-
-        # for message in chat.history:
-        #     display(to_markdown(f'**{message.role}**: {message.parts[0].text}'))
 
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
@@ -474,7 +563,7 @@ async def fetchclaude(response: Response, input: Request, current_user: dict = D
         if res_text:
             cursor.execute("""insert into response_claude(request_id,response_text) 
                            values(%s,%s)""",
-                           (input.request_id,res_text))
+                           (request_id,res_text))
             con.commit()
             response.status_code=200
             return {"ok": True, "message": "成功取得Claude response"}

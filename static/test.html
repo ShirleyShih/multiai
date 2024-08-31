@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Click Image to Upload</title>
+    <style>
+        /* 隐藏文件输入元素 */
+        #fileInput {
+            display: none;
+        }
+        /* 设置图片样式 */
+        #uploadImage {
+            cursor: pointer;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #cccccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 图片元素 -->
+    <img id="uploadImage" src="https://via.placeholder.com/200" alt="Click to upload" />
+
+    <!-- 文件输入元素 -->
+    <input type="file" id="fileInput" accept="image/*">
+
+    <script>
+        // 获取图片和文件输入元素
+        const uploadImage = document.getElementById('uploadImage');
+        const fileInput = document.getElementById('fileInput');
+
+        // 当用户点击图片时，触发文件输入的点击事件
+        uploadImage.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 当用户选择文件时，显示选中的图片
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+</html>

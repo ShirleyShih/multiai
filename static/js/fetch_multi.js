@@ -59,9 +59,22 @@ document.addEventListener("DOMContentLoaded", function() {
             const newresponse = document.createElement('div');
             newresponse.className = responseClass;
             // Convert Markdown to HTML
-            newresponse.textContent = item[1];
+            newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '').trim()}</pre>`;
+            // if (item[1].includes("```")){
+            //     newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '')}</pre>`;
+            //     hljs.highlightAll();
+            // }else{
+            //     newresponse.textContent = item[1];
+            // }
+            
             // hljs.highlightBlock(newresponse);
 
+            if (item[2]){
+                const newrequest_img = document.createElement('img');
+                newrequest_img.className = 'newrequest_img';
+                newrequest_img.src=item[2];
+                responseContainer.appendChild(newrequest_img);
+            }
             responseContainer.appendChild(newrequest);
             responseContainer.appendChild(newresponse);
         });
@@ -131,6 +144,30 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    // select request images
+    const request_pic = document.querySelector(".request-pic");
+    const fileInput = document.getElementById('fileInput');
+    const response_frame = document.querySelector('.response-frame');
+    const request_thumbnail = document.getElementById('request-thumbnail');
+
+    request_pic.addEventListener('click', () => {
+        fileInput.click();    
+    });
+
+    let image_select;
+    fileInput.addEventListener('change', (event) => {
+        image_select = event.target.files[0];
+        if (image_select) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                request_thumbnail.src = e.target.result;
+            };
+            reader.readAsDataURL(image_select);
+            request_thumbnail.style.display='block';
+            response_frame.style.height = 'calc(100% - 130px)';
+        }
+    });
+
 
     // Fetch API calls
     const requestInput = document.getElementById("request");
@@ -149,56 +186,71 @@ document.addEventListener("DOMContentLoaded", function() {
             }
             // console.log("random conversation id:"+conversation_id);
 
+            const formData = new FormData();
+            formData.append('request_text', requestText);
+            formData.append('request_id', request_id);
+            
+            if (image_select) {
+                formData.append('image', image_select);
+            }
+
             try {
                 // Create conversation_id and new request
-                await fetch(`/api/conversation/${conversation_id}`, {
+                const response = await fetch(`/api/conversation/${conversation_id}`, {
                     method: 'POST',
                     headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
+                        // 'Accept': 'application/json',
+                        // 'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({
-                        request_text: requestText,
-                        request_id: request_id
-                    })
+                    body: formData
                 });
  
                 // POST request to OpenAI, Gemini, Claude and then GET their responses
+                const data = await response.json();
+                if (response.ok) {
+                    if (conversation_id_ini === "") {
+                        sendApiRequest('/api/openai', requestText, request_id, data.imageurl);
+                        sendApiRequest('/api/gemini', requestText, request_id, image_select);
+                        sendApiRequest('/api/claude', requestText, request_id, data.imageurl);
+                        window.location.href = `/conversation/${conversation_id}`;
+                    }else{
+                        sendApiRequest('/api/openai', requestText, request_id, data.imageurl, () => getresponse_openai(conversation_id));
+                        sendApiRequest('/api/gemini', requestText, request_id, image_select, () => getresponse_gemini(conversation_id));
+                        sendApiRequest('/api/claude', requestText, request_id, data.imageurl, () => getresponse_claude(conversation_id));
+                    }
 
-    
-                if (conversation_id_ini === "") {
-                    sendApiRequest('/api/openai', requestText, request_id, );
-                    sendApiRequest('/api/gemini', requestText, request_id, );
-                    sendApiRequest('/api/claude', requestText, request_id, );
-                    window.location.href = `/conversation/${conversation_id}`;
-                }else{
-                    sendApiRequest('/api/openai', requestText, request_id, () => getresponse_openai(conversation_id));
-                    sendApiRequest('/api/gemini', requestText, request_id, () => getresponse_gemini(conversation_id));
-                    sendApiRequest('/api/claude', requestText, request_id, () => getresponse_claude(conversation_id));
+                    // Clear the input after submission
+                    requestInput.value = "";
+                    document.getElementById('request-thumbnail').style.display='none';
+                    document.querySelector('.response-frame').style.height='calc(100% - 75px)';
+                } else {
+                    console.error('Error:', await response.json());
                 }
-                
-                // Clear the input after submission
-                requestInput.value = "";
             } catch (error) {
                 console.error('Error with add new conversation_id:', error);
             }
         }
     }
 
-    async function sendApiRequest(apiUrl, requestText, requestId, callback) {
+    async function sendApiRequest(apiUrl, requestText, request_id, imageurl, callback) {
         try {
+            const formData = new FormData();
+            formData.append('request_text', requestText);
+            formData.append('request_id', request_id);
+
+            if (imageurl) {
+                formData.append('imageurl', imageurl);
+            }
+
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
+                    // 'Accept': 'application/json',
+                    // 'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({
-                    request_text: requestText,
-                    request_id: requestId
-                })
+                body: formData
             });
     
             const data = await response.json();
