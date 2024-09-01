@@ -79,13 +79,13 @@ async def signup(response: Response, user: User):
 
         if result:
             response.status_code=400
-            return {"error": True, "message": "Email已經註冊帳戶"}
+            return {"error": True, "message": "此電子信箱已註冊"}
         
         cursor.execute("insert into member(name,email,password) values(%s,%s,%s)",(user.name,user.email,user.password))
         con.commit()
 
         response.status_code=200
-        return {"ok": True, "message": "註冊成功，請登入系統"}
+        return {"ok": True, "message": "註冊成功"}
     
     except Error as e:
         response.status_code=500
@@ -121,13 +121,13 @@ async def login(response: Response, user: User_signin):
 
         if not result:
             response.status_code = 400
-            return {"error": True, "message": "Email或密碼錯誤"}
+            return {"error": True, "message": "電子信箱或密碼錯誤"}
         
         user_id, name = result
         token_expires = datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         token = create_access_token(data={"id": user_id, "name": name, "email": user.email}, expires_delta=token_expires)
         # print(token)
-        return {"token": token}
+        return {"token": token, "message": "登入成功"}
     
     except Error as e:
         response.status_code = 500

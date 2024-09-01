@@ -173,6 +173,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const requestInput = document.getElementById("request");
 
     async function handleSubmit() {
+        // loading animation and disabled submit button
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+        requestSubmit.classList.add('disabled');
+
         const requestText = requestInput.value.trim();
 
         if (requestText !== "") {
@@ -205,19 +210,21 @@ document.addEventListener("DOMContentLoaded", function() {
                     },
                     body: formData
                 });
- 
+
                 // POST request to OpenAI, Gemini, Claude and then GET their responses
                 const data = await response.json();
                 if (response.ok) {
                     if (conversation_id_ini === "") {
-                        sendApiRequest('/api/openai', requestText, request_id, data.imageurl);
-                        sendApiRequest('/api/gemini', requestText, request_id, image_select);
-                        sendApiRequest('/api/claude', requestText, request_id, data.imageurl);
+                        openai=sendApiRequest('/api/openai', requestText, request_id, data.imageurl);
+                        gemini=sendApiRequest('/api/gemini', requestText, request_id, image_select);
+                        claude=sendApiRequest('/api/claude', requestText, request_id, data.imageurl);
+                        await Promise.all([openai, gemini, claude]);
                         window.location.href = `/conversation/${conversation_id}`;
                     }else{
-                        sendApiRequest('/api/openai', requestText, request_id, data.imageurl, () => getresponse_openai(conversation_id));
-                        sendApiRequest('/api/gemini', requestText, request_id, image_select, () => getresponse_gemini(conversation_id));
-                        sendApiRequest('/api/claude', requestText, request_id, data.imageurl, () => getresponse_claude(conversation_id));
+                        openai=sendApiRequest('/api/openai', requestText, request_id, data.imageurl, () => getresponse_openai(conversation_id));
+                        gemini=sendApiRequest('/api/gemini', requestText, request_id, image_select, () => getresponse_gemini(conversation_id));
+                        claude=sendApiRequest('/api/claude', requestText, request_id, data.imageurl, () => getresponse_claude(conversation_id));
+                        await Promise.all([openai, gemini, claude]);
                     }
 
                     // Clear the input after submission
@@ -229,6 +236,10 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             } catch (error) {
                 console.error('Error with add new conversation_id:', error);
+            } finally {
+                // 隐藏加载动画并启用按钮
+                loading.style.display = 'none';
+                requestSubmit.classList.remove('disabled');
             }
         }
     }

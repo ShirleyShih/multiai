@@ -31,6 +31,7 @@ cursor.execute("""
         request_text varchar(10000) not null,
         date varchar(255) not null,
         time varchar(255) not null,
+        imageurl varchar(255) null,
         FOREIGN KEY (conversation_id) REFERENCES conversation(conversation_id) 
     )
 """)

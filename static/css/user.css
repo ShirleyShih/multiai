@@ -32,7 +32,7 @@
     background-color: #FFFEFA;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    /* gap: 10px; */
 }
 .close-signinup {
     position: absolute;
@@ -43,10 +43,11 @@
     cursor: pointer;
 }
 .signinup-title{
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
     text-align: center;
     color: #666666;
+    margin-bottom: 10px;
 }
 .redirect-signinup{
     font-size: 16px;
@@ -58,7 +59,8 @@
 form {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 /* button[type="submit"]  */
 .submit_signinup{
@@ -89,7 +91,33 @@ form {
 .signinup_name{
     display: none
 }
+.signinup_password{
+    margin-bottom: 5px;
+}
 .signinup-message{
     text-align: center;
-    gap: 0;
+    margin-bottom: 10px;
+    display: none;
+    color:firebrick;
+}
+.name-text{
+    display:none;
+}
+
+#loading {
+    position: fixed;
+    width: 30%;
+    padding: 10px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background-color: rgba(222, 184, 135, 0.7); /* Burlywood color with 80% opacity */
+    border-radius: 5px;
+    text-align: center;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.6;
 }

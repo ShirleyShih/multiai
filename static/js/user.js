@@ -50,15 +50,15 @@ function setSignInButton(text, onClick) {
 }
 
 
-
+let signinup_message = document.querySelector('.signinup-message');
 async function handleFormSubmit(event) {
     event.preventDefault(); // Prevent default form submission
 
     const emailInput = document.querySelector('#email');
     const passwordInput = document.querySelector('#password');
-    const signinup_message = document.querySelector('.signinup-message');
+    signinup_message.style.display = 'block';
 
-    if (document.querySelector('.signinup-title').textContent === "註冊會員帳號") {
+    if (document.querySelector('.signinup-title').textContent === "會員註冊") {
         // Registration form submission
         const nameInput = document.querySelector('#name');
         if (!nameInput.value || !emailInput.value || !passwordInput.value) {
@@ -99,13 +99,11 @@ async function handleFormSubmit(event) {
             });
             
             const data = await response.json();
-            console.log(data.token);
+            signinup_message.textContent = data.message;
             if (data.token) {
                 localStorage.setItem('token', data.token);
                 // location.reload();
                 window.location.href = '/';
-            } else {
-                signinup_message.textContent = data.message;
             }
         } catch (error) {
             signinup_message.textContent = "內部伺服器錯誤";
@@ -115,22 +113,26 @@ async function handleFormSubmit(event) {
 
 function redirectSigninup(event) {
     event.preventDefault(); // Prevent default form submission
+    signinup_message.style.display = 'none';
 
     const redirect = document.querySelector('.redirect-signinup');
     const signinup_title = document.querySelector('.signinup-title');
     const signinup_button = document.querySelector('button');
     const nameInput = document.querySelector('#name');
+    const nametext = document.querySelector('.name-text');
 
-    if (redirect.textContent === "還沒有帳戶？點此註冊") {
-        redirect.textContent = "已經有帳戶了？點此登入";
-        signinup_title.textContent = "註冊會員帳號";
-        signinup_button.textContent = "註冊新帳戶";
+    if (redirect.textContent === "我要註冊") {
+        redirect.textContent = "已經是會員，我要登入";
+        signinup_title.textContent = "會員註冊";
+        signinup_button.textContent = "註冊";
+        nametext.style.display = 'block';
         nameInput.style.display = 'block';
         nameInput.setAttribute('required', '');
     } else {
-        redirect.textContent = "還沒有帳戶？點此註冊";
-        signinup_title.textContent = "登入會員帳號";
-        signinup_button.textContent = "登入帳戶";
+        redirect.textContent = "我要註冊";
+        signinup_title.textContent = "會員登入";
+        signinup_button.textContent = "登入";
+        nametext.style.display = 'none';
         nameInput.style.display = 'none';
         nameInput.removeAttribute('required');
     }
