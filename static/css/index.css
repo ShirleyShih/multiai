@@ -38,8 +38,9 @@ body{
     box-sizing: border-box;
     align-self: flex-start;
     gap: 10px;
-    height: calc(100% - 40px);
+    height: calc(100% - 45px);
     overflow-y: auto;
+    padding-top: 10px;
 }
 .request-frame{
     background-color: white;
@@ -62,6 +63,7 @@ body{
     object-fit:contain;
     object-position: center;
     align-self: flex-end;
+    margin-right: 10px;
 }
 .request-input{
     display: flex;
@@ -102,7 +104,9 @@ body{
     font-weight:1300;
 }
 .ai-name{
-    padding: 5px;
+    padding-top: 10px;
+    padding-left: 10px;
+    padding-bottom: 5px;
     font-size: 18px;
     font-weight: 700;
 }
@@ -123,13 +127,22 @@ hr{
 
 .request-form{
     width: 100%;
+    display: flex;
+    align-items: center;
 }
-.request-form input[type="text"] {
+/* .request-form input[type="text"] { */
+.request-form textarea {
     border: none; /* Remove default border */
     outline: none; /* Remove focus outline */
     width: calc(100% - 70px);
     margin-left: 5px;
+    height: 40px;
+    padding-top: 12px;
+    box-sizing: border-box;
 }
+/* .request-form textarea::placeholder {
+    transform: translateY(10px);
+} */
 .request-form button {
     background-color:burlywood;
     color: white;
@@ -145,7 +158,10 @@ hr{
     width: 70%;
     max-width: 70%;
     align-self: flex-end;
-    padding: 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
     margin-right: 10px;
     margin-left: 10px;
     line-height: 1.5;
@@ -154,13 +170,15 @@ hr{
 /* mistyrose */
 .response-text-openai, .response-text-gemini, .response-text-claude{
     border-radius: 5px;
-    width: 70%;
-    max-width: 70%;
-    padding: 5px;
+    width: calc(100% - 30px);
+    max-width: calc(100% - 30px);
+    padding-right: 5px;
+    padding-left: 5px;
     margin-right: 10px;
     margin-left: 10px;
     line-height: 1.5;
     white-space: normal;
+    overflow-wrap: break-word;
 }
 .response-text-openai{
     background-color:#FFF0AC;
@@ -171,13 +189,22 @@ hr{
 .response-text-claude{
     background-color:#FFE4E0;
 }/* lightblue, #69c6ed */
-pre{
+.response-text-openai p, .response-text-gemini p, .response-text-claude p {
+    margin: 5px;
+}
+.response-text-openai pre, .response-text-gemini pre, .response-text-claude pre {
+    margin: 5px;
     white-space: pre-wrap; 
     word-wrap: break-word; 
     overflow: auto; 
-    margin: 0; 
-    padding: 0;
+    font-family: 'Noto Sans TC';
+    font-style: normal;
 }
+/* .response-text-openai code, .response-text-gemini code, .response-text-claude code {
+    margin-top: 0;
+    margin-bottom: 0;
+} */
+
 /* conversation history */
 #new-conversation {
     width: 100%;

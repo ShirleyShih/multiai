@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function checkSignInStatus() {
     const token = localStorage.getItem('token');
     if (!token) {
-        setSignInButton("會員註冊/登入<br>看聊天紀錄", open_signinup);
+        setSignInButton("登入/註冊<br>看聊天紀錄", open_signinup);
         return;
     }
 
@@ -39,7 +39,7 @@ async function checkSignInStatus() {
         }
     } catch (error) {
         console.error("Error checking sign-in status:", error);
-        setSignInButton("會員註冊/登入<br>看聊天紀錄", open_signinup);
+        setSignInButton("登入/註冊<br>看聊天紀錄", open_signinup);
     }
 }
 
@@ -58,7 +58,7 @@ async function handleFormSubmit(event) {
     const passwordInput = document.querySelector('#password');
     signinup_message.style.display = 'block';
 
-    if (document.querySelector('.signinup-title').textContent === "會員註冊") {
+    if (document.querySelector('.signinup-title').textContent === "建立帳戶") {
         // Registration form submission
         const nameInput = document.querySelector('#name');
         if (!nameInput.value || !emailInput.value || !passwordInput.value) {
@@ -121,16 +121,16 @@ function redirectSigninup(event) {
     const nameInput = document.querySelector('#name');
     const nametext = document.querySelector('.name-text');
 
-    if (redirect.textContent === "我要註冊") {
-        redirect.textContent = "已經是會員，我要登入";
-        signinup_title.textContent = "會員註冊";
+    if (redirect.textContent === "還沒有帳戶嗎？註冊") {
+        redirect.textContent = "已擁有帳戶？登入";
+        signinup_title.textContent = "建立帳戶";
         signinup_button.textContent = "註冊";
         nametext.style.display = 'block';
         nameInput.style.display = 'block';
         nameInput.setAttribute('required', '');
     } else {
-        redirect.textContent = "我要註冊";
-        signinup_title.textContent = "會員登入";
+        redirect.textContent = "還沒有帳戶嗎？註冊";
+        signinup_title.textContent = "歡迎回來";
         signinup_button.textContent = "登入";
         nametext.style.display = 'none';
         nameInput.style.display = 'none';

@@ -54,20 +54,29 @@ document.addEventListener("DOMContentLoaded", function() {
         data.forEach(item => {
             const newrequest = document.createElement('div');
             newrequest.className = 'request-text';
-            newrequest.textContent = item[0];
+            newrequest.innerHTML = item[0].replace(/\n/g, '<br>');;
 
             const newresponse = document.createElement('div');
             newresponse.className = responseClass;
-            // Convert Markdown to HTML
-            newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '').trim()}</pre>`;
-            // if (item[1].includes("```")){
-            //     newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '')}</pre>`;
-            //     hljs.highlightAll();
-            // }else{
-            //     newresponse.textContent = item[1];
-            // }
-            
-            // hljs.highlightBlock(newresponse);
+            // Display Markdown on the web app
+            // newresponse.innerHTML = item[1].trim();
+            // newresponse.innerHTML = marked.parse(item[1].trim());
+            // newresponse.innerHTML = `<pre>${item[1].trim()}</pre>`;
+            // newresponse.innerHTML = marked.parse(item[1].trim());
+            // newresponse.innerHTML = marked.parse(item[1].replace(/```/g, '').trim());
+            // newresponse.innerHTML = `<pre>${marked.parse(item[1].replace(/```/g, '').trim())}</pre>`;
+            // newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '').trim()}</pre>`;
+            if (item[1].includes("```")){
+                if (responseClass.includes("gemini")){
+                    newresponse.innerHTML = marked.parse(item[1].trim());
+                // }else if (responseClass.includes("claude")){
+                //     newresponse.innerHTML = `<pre>${marked.parse(item[1].replace(/```/g, '').trim())}</pre>`;
+                }else{
+                    newresponse.innerHTML = `<pre>${item[1].replace(/```/g, '').trim()}</pre>`;
+                }
+            }else{
+                newresponse.innerHTML = marked.parse(item[1].trim());
+            }
 
             if (item[2]){
                 const newrequest_img = document.createElement('img');
@@ -181,6 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const requestText = requestInput.value.trim();
 
         if (requestText !== "") {
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
             const request_id=generateUUID();
             // console.log(request_id);
 
@@ -194,6 +204,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const formData = new FormData();
             formData.append('request_text', requestText);
             formData.append('request_id', request_id);
+            formData.append('timeZone', timeZone);
             
             if (image_select) {
                 formData.append('image', image_select);
@@ -283,7 +294,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const requestSubmit = document.getElementById("request-submit");
     requestSubmit.addEventListener("click", function(event) {
         event.preventDefault(); // Prevents the default form submission
-        handleSubmit();
+        if (!requestInput.value.trim()) {
+            alert("請輸入訊息後再傳送!"); // Alert the user
+        } else {
+            handleSubmit();
+        }
     });
 
     // Event listener for the button click

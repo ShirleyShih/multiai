@@ -8,8 +8,7 @@
     <link href="/static/css/user.css" rel="stylesheet">
     <!-- reset CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
-    <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css"> -->
-    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.0.12/marked.min.js"></script>
 </head>
 <body>
     <div class="form-signinup">
@@ -17,7 +16,7 @@
             <!-- <div class="content-signinup-top"></div> -->
             <div class="content-signinup-main">
               <img onclick="close_signinup();" src="/static/img/icon_close.png" class="close-signinup">
-              <div class="signinup-title">會員登入</div>
+              <div class="signinup-title">歡迎回來</div>
               <form id="signinup-form">
                   <div class="name-text">姓名</div>
                   <input type="text" id="name" name="name" class="signinup_name"> <!-- placeholder="輸入姓名" -->
@@ -28,7 +27,7 @@
                   <button type="submit" id="submit_signinup" class="submit_signinup">登入</button>
               </form>
               <div class="signinup-message"></div>
-              <div class="redirect-signinup">我要註冊</div>
+              <div class="redirect-signinup">還沒有帳戶嗎？註冊</div>
             </div>
         </div>
     </div>
@@ -37,7 +36,7 @@
     <div class="index-frame">
         <div class="margin-frame">
             <img src="/static/img/logo.PNG" class="logo">
-            <div class="button_member" onclick="open_signinup();">會員註冊/登入<br>看聊天紀錄</div>
+            <div class="button_member" onclick="open_signinup();">登入/註冊<br>看聊天紀錄</div>
             <button id="new-conversation">+ 新的對話</button>
             <ul id="conversation-list">
                 <!-- add conversation history -->
@@ -68,7 +67,8 @@
                     <input type="file" id="fileInput" accept="image/*">
                     <img src="/static/img/voice.png" class="request-voice" onclick="recording();">
                     <div class="request-form">
-                        <input type="text" id="request" name="request" placeholder="傳訊息給 MultiAI" required>
+                        <!-- <input type="text" id="request" name="request" placeholder="傳訊息給 MultiAI" required> -->
+                        <textarea id="request" name="request" placeholder="傳訊息給 MultiAI" required></textarea>
                         <button type="submit" id="request-submit">傳送</button>
                     </div>
                 </div>

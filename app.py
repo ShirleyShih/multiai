@@ -197,12 +197,13 @@ s3 = boto3.client(
 
 # Define S3 bucket
 S3_BUCKET = os.environ.get('AWS_BUCKET_NAME')
-
+import pytz
 @app.post("/api/conversation/{conversation_id}")
 async def create_conversation(response: Response,
                               conversation_id: str,
                               request_text: str = Form(...),
                               request_id: str = Form(...),
+                              timeZone: str = Form(...),
                               image: Optional[UploadFile] = File(None),
                               current_user: dict = Depends(get_current_user)):
     try:
@@ -210,8 +211,19 @@ async def create_conversation(response: Response,
         memberid=current_memberid(current_user)
         # print(memberid)
 
-        current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        # Get the current UTC time
+        utc_now = datetime.datetime.now(pytz.utc)
+
+        # Convert to user's time zone
+        user_time_zone = pytz.timezone(timeZone)
+        user_time = utc_now.astimezone(user_time_zone)
+
+        current_date = user_time.strftime("%Y-%m-%d")
+        current_time = user_time.strftime("%H:%M:%S")
+        # print(user_time,current_date,current_time)
+
+        # current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+        # current_time = datetime.datetime.now().strftime("%H:%M:%S")
     
         con = mysql.connector.connect(**db_config)
         cursor=con.cursor()
