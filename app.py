@@ -52,7 +52,7 @@ app.mount("/static", StaticFiles(directory="static"))
 async def index(request: Request):
 	return FileResponse("./static/index.html", media_type="text/html")
 @app.get("/conversation/{conversation_id}", include_in_schema=False)
-async def attraction(request: Request, conversation_id: str):
+async def conversation(request: Request, conversation_id: str):
 	return FileResponse("./static/index.html", media_type="text/html")
 
 load_dotenv()
